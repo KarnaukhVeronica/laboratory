@@ -10,54 +10,61 @@ import "ace-builds/src-noconflict/mode-c_cpp";
 import "ace-builds/src-noconflict/theme-monokai";
 import "ace-builds/src-noconflict/ext-language_tools";
 
-export default function () {
-  const codeRGB = `// pins
-  int red = 4;
-  int blue = 3;
-  int green = 2;
+export default function RGBControl() {
+  const codeRGB = `// button pins
+int btn[] = {2, 3, 4};
+// RGB pins
+int rgb[] = {9, 10, 11};
 
-  int btn = 1;
-  bool first_color = true;
-
-// elements connected to pins
-  void setup_rgb()
+// connect elements to pins
+void setup_rgb()
+{
+  for( int i = 0; i < sizeof( rgb ); i++ )
   {
-    pinMode(btn, INPUT);
-    pinMode(red, OUTPUT);
-    pinMode(blue, OUTPUT);
-    pinMode(green, OUTPUT);
-    analogWrite(red, 128);
-    analogWrite(blue, 128);
-    analogWrite(green, 0);
+    pinMode( btn[i], INPUT );
+    pinMode( rgb[i], OUTPUT );
   }
+}
 
-  void loop_rgb()
+void loop_rgb()
+{
+  // RED
+  if( digitalRead( btn[0] ) == 1 )
   {
-    if (digitalRead(btn) == 0)
-    {
-    }
-    else if (digitalRead(btn) == 1)
-    {
-      if (first_color)
-      {
-        analogWrite(red, 0);
-        analogWrite(blue, 128);
-        analogWrite(green, 0);
-        first_color = false;
-      }
-      else
-      {
-        analogWrite(red, 128);
-        analogWrite(blue, 128);
-        analogWrite(green, 0);
-        first_color = true;
-      }
-      delay(100);
-    }
-  }`
- 
-  const [led, setLed] = useState(null);
+    set_color( 255, 0, 0 );
+  }
+  // GREEN
+  else if( digitalRead( btn[1] ) == 1 )
+  {
+    set_color( 0, 255, 0 );
+  }
+  // BLUE
+  else if( digitalRead( btn[2] ) == 1 )
+  {
+    set_color( 0, 0, 255 );
+  }
+}
+
+// function to change rgb color
+void set_color( int red, int green, int blue )
+{
+  analogWrite( rgb[0], red );
+  analogWrite( rgb[1], green );
+  analogWrite( rgb[2], blue );
+}`
+
+  const calculatedClassName = (color: string) => {
+    return classNames('', {
+      [styles.red]: color === 'red',
+      [styles.green]: color === 'green',
+      [styles.blue]: color === 'blue',
+      [styles.off]: color === 'off',
+    });
+  };
+
+  const [color, setColor] = useState('off');
   const [code, setCode] = useState(codeRGB);
+  const [runner, setRunner] = useState<AVRRunner>(new AVRRunner());
   const [status, setStatus] = useState('');
   const [buildResult, setBuildResult] = useState('');
   const [hex, setHex] = useState(null);
@@ -81,7 +88,6 @@ export default function () {
         setBuildResult(result.output);
         setHex(result.hex);
         setStatus(result.code == 0 ? 'Success' : 'Error');
-        setLed({ color: 'red' }); // Initialize LED state after successful build and upload
       } else {
         console.error('Failed to build and upload:', response.statusText);
         setBuildResult('Failed to build and upload');
@@ -93,16 +99,21 @@ export default function () {
     }
   };
 
-  const toggleRGB = () => {
-    if (led) {
-      const nextColor = led.color === 'red' ? 'blue' : led.color === 'blue' ? 'green' : 'red';
-      setLed({ color: nextColor });
-    }
-  };
-
   const onChange = (newValue: string) => {
     setCode(newValue);
   };
+
+  const handleColorChange = (newColor: string) => {
+    setColor(newColor);
+  };
+
+  useEffect(() => {
+    runner.stop();
+    if (hex) {
+      runner.uploadHex(hex || '');
+      runner.execute(() => {});
+    }
+  }, [hex]);
 
   return (
     <main className={styles.main}>
@@ -115,32 +126,22 @@ export default function () {
         editorProps={{ $blockScrolling: true }}
       />
       <button onClick={handleBuildAndUpload}>Build and Upload</button>
-
-      {led ? (
-        <>
-          <div className={classNames(styles.led, {
-            [styles.red]: led.color === 'red',
-            [styles.blue]: led.color === 'blue',
-            [styles.green]: led.color === 'green'
-          })}>
-            LED - {led.color.toUpperCase()}
-          </div>
-
-        <button onClick={toggleRGB}>Toggle RGB</button>
-        </>
-      ) : (
-        <div>
-          LED
-        </div>
-        )}
+      
+      <div className={calculatedClassName(color)}>RGB LED - {color.toUpperCase()}</div>
+      
+      <div>
+        <button onClick={() => handleColorChange('red')}>Red</button>
+        <button onClick={() => handleColorChange('green')}>Green</button>
+        <button onClick={() => handleColorChange('blue')}>Blue</button>
+      </div>
 
       <div>
         <h2>OUTPUT</h2>
-        <h3>Status: {status}</h3>
+        <h3>Status: {status} </h3>
         <div id="output">
           {buildResult}
         </div>
       </div>
-    </main>
+    </main >
   );
-};
+}
