@@ -5,6 +5,7 @@ import AceEditor from "react-ace";
 import { useState, useEffect } from 'react';
 import { AVRRunner } from '../services/execute';
 import classNames from 'classnames';
+import "@wokwi/elements";
 
 import "ace-builds/src-noconflict/mode-c_cpp";
 import "ace-builds/src-noconflict/theme-monokai";
@@ -26,6 +27,7 @@ void loop() {
   digitalWrite(leds[i], LOW);
   i = (i + 1) % sizeof(leds);
 }`
+
   const calculatedClassName = (color: string) => {
     return  classNames('', {
       [styles.red]: color === 'red',
@@ -42,6 +44,7 @@ void loop() {
     { id: 4, pin: 9, value: false, color: 'blue' },
     { id: 5, pin: 8, value: false, color: 'green' },
   ]);
+  
   const [code, setCode] = useState(code6LED);
   const [runner, setRunner] = useState<AVRRunner>(new AVRRunner());
   const [status, setStatus] = useState('');
@@ -84,6 +87,7 @@ void loop() {
       setBuildResult('Error during API call');
     }
   };
+  
   const updateLEDs = (value: number, startPin: number) => {
     for (const led of leds) {
       const pin = led.pin;
@@ -96,6 +100,7 @@ void loop() {
       }
     }
   };
+
   const onChange = (newValue: string) => {
     setCode(newValue);
   };
@@ -111,25 +116,35 @@ void loop() {
 
   }, [hex]);
 
-
   return (
     <main className={styles.main}>
-      <AceEditor
-        value={code}
-        mode="c_cpp"
-        theme="monokai"
-        name="UNIQUE_ID_OF_DIV"
-        onChange={onChange}
-        editorProps={{ $blockScrolling: true }}
-      />
-      <button onClick={handleBuildAndUpload}>Build and Upload</button>
+      <div className={styles.container}>
+        <div className={styles.column}>
+          <AceEditor
+            value={code}
+            mode="c_cpp"
+            theme="monokai"
+            name="UNIQUE_ID_OF_DIV"
+            onChange={onChange}
+            editorProps={{ $blockScrolling: true }}
+          />
+          <button onClick={handleBuildAndUpload}>Build and Upload</button>
+        </div>
 
-      {leds.map((led) => (
-        <span key={led.id} color={led.color}>LED[{led.id}]
-        <div className={led.value ? calculatedClassName(led.color): ''}> {led.value.toString()}</div>
-        </span>
-      ))}
+        <div className={styles.column}>
+    
+          {leds.map((led) => (
+            <wokwi-led
+              key={led.id}
+              color={led.color}
+              label={`LED-${led.id}`} 
+              value={led.value ? true : undefined} >
+            </wokwi-led>
+          ))}
 
+        </div>
+      </div>
+   
       <div>
         <h2>OUTPUT</h2>
         <h3>Status: {status} </h3>
