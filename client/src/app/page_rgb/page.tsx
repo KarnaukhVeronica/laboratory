@@ -13,34 +13,36 @@ import "ace-builds/src-noconflict/ext-language_tools";
 
 export default function () {
   const codeRGB = `// button pins
-int btn[] = {2, 3, 4};
+int btn[] = {4, 3, 2};
 // RGB pins
 int rgb[] = {11, 10, 9};
   
 // connect elements to pins
 void setup()
 {
-  for( int i = 0; i < sizeof( rgb ); i++ )
+  for( int i = 0; i < sizeof( rgb ) / sizeof( rgb[0] ); i++ )
   {
-    pinMode( btn[i], INPUT );
+    pinMode( btn[i], INPUT_PULLUP );
     pinMode( rgb[i], OUTPUT );
   }
+
+  set_color( 0, 0, 0 );
 }
-  
+
 void loop()
 {
   // RED
-  if( digitalRead( btn[0] ) == 1 )
+  if( digitalRead( btn[0] ) == LOW )
   {
     set_color( 255, 0, 0 );
   }
   // GREEN
-  else if( digitalRead( btn[1] ) == 1 )
+  else if( digitalRead( btn[1] ) == LOW )
   {
     set_color( 0, 255, 0 );
   }
   // BLUE
-  else if( digitalRead( btn[2] ) == 1 )
+  else if( digitalRead( btn[2] ) == LOW )
   {
     set_color( 0, 0, 255 );
   }
